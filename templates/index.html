@@ -154,11 +154,19 @@
                 // Парсинг всех номеров
                 const tspPhones = parseTSPTB(document.querySelector('[name="tsp"]').value, 'тсп');
                 const tbPhones = parseTSPTB(document.querySelector('[name="tb"]').value, 'тб');
-                const existingNtPhones = parseNT(document.getElementById('ntOutput').value);
+                const existingNtPhones = document.getElementById('ntOutput').value
+                    .split("нт ")  // Разделяем по "нт "
+                    .map(phone => phone.trim())  // Убираем пробелы
+                    .filter(phone => phone !== "");
                 const manualPhones = parseNT(document.getElementById('manualInput').value);
+
+                console.log("📌 Список existingNtPhones: ", existingNtPhones);
+                console.log("📌 Список manualPhones: ", manualPhones);
 
                 // Объединение и фильтрация
                 const combinedPhones = [...existingNtPhones, ...manualPhones];
+
+                console.log("📌 Итоговый список: ", combinedPhones);
 
                 const filteredPhones = combinedPhones
                     .filter((phone, index, self) =>
@@ -181,7 +189,7 @@
                 .map(item => {
                     let number = item
                         .replace(/\D/g, '') // Удаляем все нецифры
-                        .replace(/^\+?7?/, '') // Убираем +7/7 в начале
+                        .replace(/^(\+7|7)/, '')
                         .slice(0, 10); // Берем первые 10 цифр
 
                     // Проверка валидности
@@ -197,7 +205,7 @@
                     let number = item
                         .replace(new RegExp(prefix, 'gi'), '') // Удаляем префикс
                         .replace(/\D/g, '') // Удаляем все нецифры
-                        .replace(/^\+?7?/, '') // Убираем +7/7
+                        .replace(/^(\+7|7)/, '')
                         .slice(0, 10);
 
                     return number.length === 10 &&

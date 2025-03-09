@@ -96,7 +96,7 @@
     <div class="result-card">
         <h4 class="mt-4">📞 Общий список телефонов со всех сайтов без ТСП и ТБ:</h4>
         <ul class="list-group">
-            <textarea class="form-control" name="nt" id="ntOutput" required rows="5">{% for phone in filtered_phones %}нт {{ phone }} {% endfor %}</textarea>
+            <textarea class="form-control" name="nt" id="ntOutput" required rows="5">нт {{ filtered_phones | map('string') | join(' нт ') }}</textarea>
         </ul>
     </div>
     {% elif filtered_phones == [] %}
@@ -107,7 +107,7 @@
     <div class="result-card">
         <div class="form-group">
             <h4 class="mt-4">📞 Общий список телефонов со всех сайтов:</h4>
-            <textarea class="form-control" name="nt" id="ntOutput" required rows="5">{% for phone in all_phones %}нт {{ phone }} {% endfor %}</textarea>
+            <textarea class="form-control" name="nt" id="ntOutput" required rows="5">нт {{ all_phones | map('string') | join(' нт ') }}</textarea>
         </div>
     </div>
     {% else %}

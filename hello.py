@@ -201,6 +201,7 @@ def index():
 
         zachestniybiznes_url, zachestniybiznes_phones, zachestniybiznes_url_status, zachestniybiznes_phones_status = zachestniybiznes(inn_org)
         zachestniybiznes_phones = filter_and_sort_phones(zachestniybiznes_phones)
+        # zachestniybiznes_url_status = 'Ошибка'  # Заглушка для тестирования функции сайта ручного ввода списка телефонов
         print('Ссылка на zachestniybiznes: ', zachestniybiznes_url, flush=True)
         print('Телефоны из zachestniybiznes: ', zachestniybiznes_phones, flush=True)
         print('Ошибки страницы поиска: ', zachestniybiznes_url_status, flush=True)
