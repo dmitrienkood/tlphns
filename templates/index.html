@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск компании</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .sidebar {
+            width: 30%;
+            padding: 20px;
+            background: #f8f9fa;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .main-content {
+            width: 70%;
+            padding: 20px;
+        }
+        .form-group {
+             margin-bottom: 10px;
+        }
+        .sidebar button {
+             margin-top: 10px; /* Уменьшили отступ сверху кнопки */
+             margin-bottom: 20px; /* Уменьшили отступ снизу кнопки */
+        }
+        .result-card {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .toggle-btn {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .sidebar, .main-content {
+                width: 100%;
+            }
+        }
+        #ntOutput {
+            transition: all 0.3s;
+            border: 2px solid #ddd;
+        }
+
+        #ntOutput:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1 class="mb-4">🔎 Поиск</h1>
+            <form method="post" id="searchForm" class="mb-4">
+                <div class="form-group">
+                    <div class="mb-3">
+                        <label class="form-label">ИНН:</label>
+                        <input type="text" class="form-control" name="inn_org" required value="{{ inn_org if inn_org else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ТСП:</label>
+                        <input type="text" class="form-control" name="tsp" value="{{ tsp if tsp else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ТБ:</label>
+                        <input type="text" class="form-control" name="tb" value="{{ tb if tb else '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">🔍 Найти</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="main-content">
+            <div id="loading" class="text-center mt-3" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p>Поиск информации...</p>
+            </div>
+
+            <!-- Контейнер для результатов -->
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleVisibility(id) {
+            var element = document.getElementById(id);
+            if (element.classList.contains("hidden")) {
+                element.classList.remove("hidden");
+            } else {
+                element.classList.add("hidden");
+            }
+        }
+    </script>
+
+    <script>
+        function clearFields() {
+            document.querySelector('input[name="inn_org"]').value = "";
+            document.querySelector('input[name="tsp"]').value = "";
+            document.querySelector('input[name="tb"]').value = "";
+        }
+    </script>
+
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // Отключаем стандартную отправку формы
+
+            let formData = new FormData(this);
+
+            document.getElementById("loading").style.display = "block";  // Показываем спиннер
+            document.getElementById("results").innerHTML = "";  // Очищаем предыдущие результаты
+
+            fetch("/", {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" },  // Это нужно для Flask
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("loading").style.display = "none";  // Скрываем спиннер
+                document.getElementById("results").innerHTML = html;  // Вставляем результат
+            })
+            .catch(error => {
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("results").innerHTML = "<p class='text-danger'>Ошибка загрузки</p>";
+            });
+        });
+    </script>
+
+    <script>
+        function mergePhones() {
+            try {
+                // Парсинг всех номеров
+                const tspPhones = parseTSPTB(document.querySelector('[name="tsp"]').value, 'тсп');
+                const tbPhones = parseTSPTB(document.querySelector('[name="tb"]').value, 'тб');
+                const existingNtPhones = parseNT(document.getElementById('ntOutput').value);
+                const manualPhones = parseNT(document.getElementById('manualInput').value);
+
+                // Объединение и фильтрация
+                const combinedPhones = [...existingNtPhones, ...manualPhones];
+
+                const filteredPhones = combinedPhones
+                    .filter((phone, index, self) =>
+                        self.indexOf(phone) === index &&
+                        !tspPhones.includes(phone) &&
+                        !tbPhones.includes(phone)
+                    );
+
+                // Форматирование вывода
+                document.getElementById('ntOutput').value =
+                    filteredPhones.map(phone => `нт ${phone}`).join(' ');
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        function parseNT(text) {
+            return text.split(/\n\n+/)
+                .map(item => {
+                    let number = item
+                        .replace(/\D/g, '') // Удаляем все нецифры
+                        .replace(/^\+?7?/, '') // Убираем +7/7 в начале
+                        .slice(0, 10); // Берем первые 10 цифр
+
+                    // Проверка валидности
+                    return number.length === 10 &&
+                           ['3','4','8','9'].includes(number[0]) ? number : null;
+                })
+                .filter(number => number !== null);
+        }
+
+        function parseTSPTB(text, prefix) {
+            return text.split(/\n\n+/)
+                .map(item => {
+                    let number = item
+                        .replace(new RegExp(prefix, 'gi'), '') // Удаляем префикс
+                        .replace(/\D/g, '') // Удаляем все нецифры
+                        .replace(/^\+?7?/, '') // Убираем +7/7
+                        .slice(0, 10);
+
+                    return number.length === 10 &&
+                           ['3','4','8','9'].includes(number[0]) ? number : null;
+                })
+                .filter(number => number !== null);
+        }
+        </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

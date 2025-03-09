@@ -1,0 +1,118 @@
+{% if listorg_status or org_ogrn %}<button type="button" class="btn btn-secondary w-100 mt-2" onclick="clearFields()">🗑 Новый поиск (очистить поля)</button>{% endif %}
+{% if listorg_status %}
+    <div class="result-card">
+        <h3 class="mt-4">🚫 ОШИБКА 🚫</h3>
+        <h3 class="mt-4">{{ listorg_status }}</h3>
+    </div>
+{% elif org_ogrn %}
+    <div class="result-card">
+        <h2>{{ org_name }}</h2>
+        <h3 class="mt-3">📌 Ссылки:</h3>
+        <ul class="list-group">
+            {% if checko_url %}<li class="list-group-item"><img src="https://checko.ru/icons/favicon-16x16.png"> Чекко: <a href="{{ checko_url }}" target="_blank">{{ checko_url }}</a></li>{% endif %}
+            {% if listorg_url %}<li class="list-group-item"><img src="https://www.list-org.com/favicon-16x16.png"> List-Org: <a href="{{ listorg_url }}" target="_blank">{{ listorg_url }}</a></li>{% endif %}
+            {% if saby_url %}<li class="list-group-item">🌐 Контур: <a href="{{ saby_url }}" target="_blank">{{ saby_url }}</a></li>{% endif %}
+            {% if zachestniybiznes_url_status %}<li class="list-group-item">🚫 {{ zachestniybiznes_url_status }}</li>{% elif zachestniybiznes_url %}<li class="list-group-item"><img src="https://zachestnyibiznes.ru/favicon-16x16.png"> ЗаЧестныйБизнес: <a href="{{ zachestniybiznes_url }}" target="_blank">{{ zachestniybiznes_url }}</a></li>{% endif %}
+            {% if zachestniybiznes_url_status %}<li class="list-group-item"><img src="https://zachestnyibiznes.ru/favicon-16x16.png"> ЗаЧестныйБизнес проверьте самостоятельно: <a href=https://zachestnyibiznes.ru/search?query={{inn_org}} target="_blank">https://zachestnyibiznes.ru/search?query={{ inn_org }}</a></li>{% endif %}
+        </ul>
+    </div>
+
+    {% if zachestniybiznes_url_status or zachestniybiznes_phones_status %}
+        <div class="result-card mt-3">
+            <h4>✍️ Введите телефоны из ЗаЧестныйБизнес вручную:</h4>
+            <div class="mt-2">
+                <textarea class="form-control"
+                          id="manualInput"
+                          rows="3"
+                          placeholder="Формат: нт 79991234567"></textarea>
+                <button type="button"
+                        class="btn btn-success mt-2"
+                        onclick="mergePhones()">
+                    ➕ Добавить к результатам
+                </button>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if all_phones %}
+    <div class="result-card">
+        <h3 class="mt-4">📞 Телефоны:</h3>
+
+        {% if checko_phones %}
+        <p class="toggle-btn" onclick="toggleVisibility('checko_phones')"><img src="https://checko.ru/icons/favicon-16x16.png"> Телефоны из Чекко ⬇</p>
+        <ul class="list-group">
+            <div id="checko_phones" class="hidden">
+                <li class="list-group-item">{% for phone in checko_phones %} нт {{ phone }} {% endfor %}</li><br>
+            </div>
+        </ul>
+        {% endif %}
+
+        {% if listorg_phones %}
+        <p class="toggle-btn" onclick="toggleVisibility('listorg_phones')"><img src="https://www.list-org.com/favicon-16x16.png"> Телефоны из List-Org ⬇</p>
+        <ul class="list-group">
+            <div id="listorg_phones" class="hidden">
+                <li class="list-group-item">{% for phone in listorg_phones %} нт {{ phone }} {% endfor %}</li><br>
+            </div>
+        </ul>
+        {% endif %}
+
+        {% if saby_phones %}
+        <p class="toggle-btn" onclick="toggleVisibility('saby_phones')">📌 Телефоны из Контур ⬇</p>
+        <ul class="list-group">
+            <div id="saby_phones" class="hidden">
+                <li class="list-group-item">{% for phone in saby_phones %} нт {{ phone }} {% endfor %}</li><br>
+            </div>
+        </ul>
+        {% endif %}
+
+        {% if zachestniybiznes_phones_status %}
+        <p class="toggle-btn" onclick="toggleVisibility('zachestniybiznes_phones_status')">🚫 Телефоны из ЗаЧестныйБизнес ⬇</p>
+        <ul class="list-group">
+            <div id="zachestniybiznes_phones_status" class="hidden">
+                <li class="list-group-item">{{ zachestniybiznes_phones_status }}. Посмотрите на сайте самостоятельно</li><br>
+            </div>
+        </ul>
+        {% elif zachestniybiznes_phones %}
+        <p class="toggle-btn" onclick="toggleVisibility('zachestniybiznes_phones')"><img src="https://zachestnyibiznes.ru/favicon-16x16.png"> Телефоны из ЗаЧестныйБизнес ⬇</p>
+        <ul class="list-group">
+            <div id="zachestniybiznes_phones" class="hidden">
+                <li class="list-group-item">{% for phone in zachestniybiznes_phones %} нт {{ phone }} {% endfor %}</li><br>
+            </div>
+        </ul>
+        {% endif %}
+
+        {% if tsp_and_tb_phones %}
+        <p class="toggle-btn" onclick="toggleVisibility('all_phones_hidden')">📌 Общий список телефонов со всех сайтов ⬇</p>
+        <ul class="list-group">
+            <div id="all_phones_hidden" class="hidden">
+                <li class="list-group-item">{% for phone in all_phones %} нт {{ phone }} {% endfor %}</li><br>
+            </div>
+        </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if filtered_phones != ['1'] and filtered_phones != [] %}
+    <div class="result-card">
+        <h4 class="mt-4">📞 Общий список телефонов со всех сайтов без ТСП и ТБ:</h4>
+        <ul class="list-group">
+            <textarea class="form-control" name="nt" id="ntOutput" required rows="5">{% for phone in filtered_phones %}нт {{ phone }} {% endfor %}</textarea>
+        </ul>
+    </div>
+    {% elif filtered_phones == [] %}
+    <div class="result-card">
+        <h3 class="mt-4">📞 Другие телефоны, отличающиеся от ТСП и ТБ не найдены( </h3>
+    </div>
+    {% elif all_phones %}
+    <div class="result-card">
+        <div class="form-group">
+            <h4 class="mt-4">📞 Общий список телефонов со всех сайтов:</h4>
+            <textarea class="form-control" name="nt" id="ntOutput" required rows="5">{% for phone in all_phones %}нт {{ phone }} {% endfor %}</textarea>
+        </div>
+    </div>
+    {% else %}
+    <div class="result-card">
+        <h3 class="mt-4">📞 К сожалению, телефоны не найдены( </h3>
+    </div>
+    {% endif %}
+{% endif %}
